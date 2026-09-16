@@ -3,6 +3,7 @@ name = "screenshot-to-code-backend"
 version = "0.1.0"
 description = "Screenshot to Code Backend API"
 requires-python = ">=3.10,<3.13"
+
 dependencies = [
     "fastapi[standard]>=0.115.6",
     "uvicorn>=0.25.0",
@@ -29,3 +30,11 @@ entrypoint = "main:app"
 
 [tool.uv]
 package = false
+
+[tool.setuptools]
+packages = []
+py-modules = []
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
