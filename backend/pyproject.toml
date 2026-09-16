@@ -38,3 +38,6 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.fastapi]
 entrypoint = "main:app"
+
+[tool.uv]
+package = false
