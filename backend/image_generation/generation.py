@@ -1,67 +1,38 @@
-import asyncio
-import time
-from typing import List, Union
+import os
+import base64
+from google import genai
+from google.genai import types
 
-from image_generation.replicate import (
-    DEFAULT_IMAGE_MODEL,
-    ReplicateImageModel,
-    call_replicate,
-)
+def generate_image_with_gemini(prompt: str) -> str:
+    """
+    Gemini/Imagen model ka istemal karke prompt se image generate karta hai 
+    aur Base64 Data URL string return karta hai.
+    """
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise ValueError("GEMINI_API_KEY environment variable mein nahi mila. Pehle .env file check karein.")
 
+    # Initialize Gemini Client
+    client = genai.Client(api_key=api_key)
 
-REPLICATE_BATCH_SIZE = 20
-REPLICATE_IMAGE_MODEL: ReplicateImageModel = DEFAULT_IMAGE_MODEL
+    try:
+        # Imagen 3 model call
+        result = client.models.generate_images(
+            model='imagen-3.0-generate-002',
+            prompt=prompt,
+            config=types.GenerateImagesConfig(
+                number_of_images=1,
+                output_mime_type="image/jpeg",
+                aspect_ratio="1:1",
+            )
+        )
 
+        # Base64 string build karna
+        for generated_image in result.generated_images:
+            encoded = base64.b64encode(generated_image.image.image_bytes).decode('utf-8')
+            return f"data:image/jpeg;base64,{encoded}"
 
-async def process_tasks(
-    prompts: List[str],
-    api_key: str,
-    _base_url: str | None,
-    _model: str,
-) -> List[Union[str, None]]:
-    start_time = time.time()
-    results: list[str | BaseException | None]
-    results = []
-    for i in range(0, len(prompts), REPLICATE_BATCH_SIZE):
-        batch = prompts[i : i + REPLICATE_BATCH_SIZE]
-        tasks = [generate_image_replicate(p, api_key) for p in batch]
-        results.extend(await asyncio.gather(*tasks, return_exceptions=True))
-    end_time = time.time()
-    generation_time = end_time - start_time
-    print(f"Image generation time: {generation_time:.2f} seconds")
+        raise Exception("Google GenAI API se koi image receive nahi hui.")
 
-    processed_results: List[Union[str, None]] = []
-    for result in results:
-        if isinstance(result, BaseException):
-            print(f"An exception occurred: {result}")
-            processed_results.append(None)
-        else:
-            processed_results.append(result)
-
-    return processed_results
-
-
-async def generate_image_replicate(prompt: str, api_key: str) -> str:
-    replicate_input: dict[str, str | int | float | bool]
-    if REPLICATE_IMAGE_MODEL == "flux_2_klein":
-        replicate_input = {
-            "prompt": prompt,
-            "aspect_ratio": "1:1",
-            "output_format": "png",
-        }
-    else:
-        replicate_input = {
-            "prompt": prompt,
-            "width": 1024,
-            "height": 1024,
-            "go_fast": False,
-            "output_format": "png",
-            "guidance_scale": 0,
-            "num_inference_steps": 8,
-        }
-
-    return await call_replicate(
-        replicate_input,
-        api_key,
-        model=REPLICATE_IMAGE_MODEL,
-    )
+    except Exception as e:
+        raise RuntimeError(f"Image generation me error aaya: {str(e)}")
