@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "backend"
 version = "0.1.0"
-description = ""
+description = "Screenshot to Code Backend API"
 authors = ["Abi Raja <abimanyuraja@gmail.com>"]
 license = "MIT"
 package-mode = false
@@ -14,6 +14,7 @@ websockets = "^14.1"
 openai = "2.16.0"
 python-dotenv = "^1.0.0"
 beautifulsoup4 = "^4.12.2"
+httpx = "^0.28.1"
 pre-commit = "^3.6.2"
 anthropic = "^0.84.0"
 moviepy = "^1.0.3"
